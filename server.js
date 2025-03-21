@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const songRoutes = require('./routes/songRoutes');
 const authRoutes = require('./routes/authRoutes');
 
@@ -9,20 +10,21 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-// app.use(cors());
-// ✅ Corrected CORS configuration (single-use)
-// app.use(cors({
-//   origin: 'https://melody-connect.netlify.app', // Allow only your frontend domain
-//   methods: 'GET,POST,PUT,DELETE',
-//   credentials: true
-// }));
-app.use(cors({
-  origin: '*'
-}));
+
+// ✅ Corrected CORS for Vercel explicitly
+app.use(cors({ origin: true }));
+
+// Extra Middleware (Important)
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*'); // or your frontend domain
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
 
 app.use(express.json());
 
-// Static files middleware ✅
+// Static files middleware
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection
