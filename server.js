@@ -1,3 +1,5 @@
+// server.js (backend)
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -11,38 +13,42 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Corrected CORS for Vercel explicitly
-app.use(cors({ origin: true }));
+// ✅ Explicit CORS middleware for Vercel (Tested setup)
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 
-// Extra Middleware (Important)
+// Additional explicit middleware to ensure headers are set:
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*'); // or your frontend domain
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header("Access-Control-Allow-Origin", "*"); // Allow all origins temporarily
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
   next();
 });
 
 app.use(express.json());
-
-// Static files middleware
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection
-mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('Could not connect to MongoDB', err));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('MongoDB Connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Routes
 app.use('/api/songs', songRoutes);
 app.use('/api/auth', authRoutes);
 
 // Root route
-app.get('/', (req, res) => {
-  res.send('Welcome to the Lyrics Translator API');
-});
+app.get('/', (req, res) => res.send('Welcome to Lyrics Translator API'));
 
-// Server start
+// Start server (for local testing)
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
